@@ -1,0 +1,22 @@
+Source: gnome-shell-extension-notification-banner-reloaded
+Section: gnome
+Priority: optional
+Maintainer: Nate Marti <nate_marti@sil.org>
+Build-Depends:
+ debhelper-compat (= 13),
+ dh-sequence-gnome,
+ libglib2.0-bin,
+Standards-Version: 4.5.0
+Rules-Requires-Root: no
+Homepage: https://github.com/wasta-linux/gnome-shell-extension-notification-banner-reloaded
+
+Package: gnome-shell-extension-notification-banner-reloaded
+Architecture: all
+Depends:
+ gnome-shell (<< 43~),
+ ${shlibs:Depends},
+ ${misc:Depends}
+Suggests:
+ gnome-shell-extension-prefs,
+Description: Notification Banner Reloaded support for GNOME Shell
+This extension integrates Notification Banner Reloaded into GNOME Shell.
