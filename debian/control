@@ -19,4 +19,4 @@ Depends:
 Suggests:
  gnome-shell-extension-prefs,
 Description: Notification Banner Reloaded support for GNOME Shell
-This extension integrates Notification Banner Reloaded into GNOME Shell.
+ This extension integrates Notification Banner Reloaded into GNOME Shell.
