@@ -1,11 +1,5 @@
-gnome-shell-extension-notification-banner-reloaded (42.0.1) jammy; urgency=medium
-
-  * Fix build-blocking typo in debian/control.
-
- -- Nate Marti <nate_marti@sil.org>  Mon, 02 May 2022 07:17:43 +0100
-
-gnome-shell-extension-notification-banner-reloaded (42) jammy; urgency=medium
+gnome-shell-extension-notification-banner-reloaded (45) noble; urgency=medium
 
   * Initial release.
 
- -- Nate Marti <nate_marti@sil.org>  Wed, 02 May 2022 07:16:18 +0100
+ -- Nate Marti <nate_marti@sil.org>  Mon, 04 Dec 2023 11:32:40 +0100

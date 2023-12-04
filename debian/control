@@ -13,7 +13,7 @@ Homepage: https://github.com/wasta-linux/gnome-shell-extension-notification-bann
 Package: gnome-shell-extension-notification-banner-reloaded
 Architecture: all
 Depends:
- gnome-shell (<< 43~),
+ gnome-shell (>= 43~),
  ${shlibs:Depends},
  ${misc:Depends}
 Suggests:

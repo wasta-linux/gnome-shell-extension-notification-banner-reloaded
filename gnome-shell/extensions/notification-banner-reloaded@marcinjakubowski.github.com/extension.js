@@ -16,15 +16,29 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-const { Clutter, Gio, GLib, GObject, Meta, Shell, St } = imports.gi;
+import Clutter from 'gi://Clutter';
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const Main = imports.ui.main;
-const MessageTray = imports.ui.messageTray.MessageTray;
-const Utils = Me.imports.utils;
+
+import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import { MessageTray } from 'resource:///org/gnome/shell/ui/messageTray.js';
+import * as Utils from './utils.js';
+
 const BannerBin = Main.messageTray._bannerBin;
-const { NOTIFICATION_TIMEOUT, HIDE_TIMEOUT, LONGER_HIDE_TIMEOUT, IDLE_TIME, State, Urgency } = imports.ui.messageTray;
+
+/* Imports necessary by the code pulled in from messageTray.js */
+import { State, Urgency } from 'resource:///org/gnome/shell/ui/messageTray.js';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
+import St from 'gi://St';
+
+const NOTIFICATION_TIMEOUT = 4000;
+const HIDE_TIMEOUT = 200;
+const LONGER_HIDE_TIMEOUT = 600;
+const IDLE_TIME = 1000;
 
 let ANIMATION_TIME = 200;
 let ANIMATION_DIRECTION = 2;
@@ -34,13 +48,17 @@ let PADDING_VERTICAL = 0;
 let PADDING_HORIZONTAL = 0;
 let ALWAYS_MINIMIZE = 0;
 
-function patcher(obj, method, original, patch) {
+function patcher(obj, live, method, original, patch) {
     const body = eval(`${obj}.prototype.${method}.toString()`);
     const newBody = body.replace(original, patch).replace(method + "(", "function(")
     eval(`${obj}.prototype.${method} = ${newBody}`);
+    eval(`${live}.${method} = ${newBody}`);
 }
 
-const getMessageTraySize = () => ({ width, height } = Main.layoutManager.getWorkAreaForMonitor(global.display.get_current_monitor()));
+const getMessageTraySize = () => {
+    const { width, height } = Main.layoutManager.getWorkAreaForMonitor(global.display.get_primary_monitor());
+    return {width, height};
+}
 
 const originalShow = MessageTray.prototype._showNotification;
 const originalHide = MessageTray.prototype._hideNotification;
@@ -89,7 +107,6 @@ function calcHide(self) {
             y = getMessageTraySize().height
             break;
     }
-
     return { x, y }
 }
 
@@ -127,16 +144,19 @@ function calcStart(self) {
 const patches = [
     { 
         "obj": "MessageTray", "method": "_updateShowingNotification",
+        "live": "Main.messageTray",
         "original": 'y: 0',
         "patch": '...calcTarget(this)'
     },
     { 
         "obj": "MessageTray", "method": "_showNotification",
+        "live": "Main.messageTray",
         "original": 'this._bannerBin.y = -this._banner.height',
         "patch": 'calcStart(this)'
     },
     { 
         "obj": "MessageTray", "method": "_hideNotification",
+        "live": "Main.messageTray",
         "original": 'y: -this._bannerBin.height',
         "patch": '...calcHide(this)'
     }
@@ -144,19 +164,21 @@ const patches = [
 
 const always_minimize_patch = {
     obj: "MessageTray",
+    live: "Main.messageTray",
     method: "_updateShowingNotification",
     original: "this._expandBanner(true)",
     patch: "// always minimized setting enabled by notification-banner-reloaded ... this._expandBanner(true)",
 };
 
-class Extension {
-    constructor() {
+export default class NotificationExtension extends Extension {
+    constructor(metadata) {
+        super(metadata);
         this._previous_y_align = BannerBin.get_y_align();
         this._previous_x_align = BannerBin.get_x_align();
     }
 
     _loadSettings() {
-        this._settings = ExtensionUtils.getSettings();
+        this._settings = this.getSettings();
         this._settingsChangedId = this._settings.connect('changed', this._onSettingsChange.bind(this));
         this._fetchSettings();
     }
@@ -188,13 +210,13 @@ class Extension {
         BannerBin.set_x_align(x_align);
         BannerBin.set_y_align(y_align);
         this.restore();
-        for (const { obj, method, original, patch } of patches) {
-            patcher(obj, method, original, patch)
+        for (const { obj, live, method, original, patch } of patches) {
+            patcher(obj, live, method, original, patch)
         }
 
         if (ALWAYS_MINIMIZE) {
-            const { obj, method, original, patch } = always_minimize_patch;
-            patcher(obj, method, original, patch);
+            const { obj, live, method, original, patch } = always_minimize_patch;
+            patcher(obj, live, method, original, patch);
         }
     }
 
@@ -218,8 +240,3 @@ class Extension {
         MessageTray.prototype._updateShowingNotification = originalUpdateShowing;
     }
 }
-
-function init() {
-    return new Extension();
-}
-
